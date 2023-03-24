@@ -2,6 +2,8 @@ pragma solidity =0.5.16;
 
 // a library for performing various math operations
 
+// 求两个`uint`的最小值
+// 对一个`uint`进行开方运算
 library Math {
     function min(uint x, uint y) internal pure returns (uint z) {
         z = x < y ? x : y;
