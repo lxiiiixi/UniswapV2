@@ -3,13 +3,14 @@ pragma solidity =0.5.16;
 import './interfaces/IUniswapV2Factory.sol';
 import './UniswapV2Pair.sol';
 
-// uniswapV2 的核心合约之一
+// uniswapV2 的核心合约之一 工厂合约
+// uniswapV2 只需要部署工厂合约 pair合约是通过工厂合约创建的
 
 contract UniswapV2Factory is IUniswapV2Factory {
     address public feeTo;
-    // feeTo：这个状态变量主要是用来切换开发团队手续费开关。在UniswapV2中，用户在交易代币时，会被收取交易额的千分之三的手续费分配给所有流动性供给者。如果`feeTo`不为零地址，则代表开关打开，此时会在手续费中分1/6给开发团队。`feeTo`设置为零地址（默认值），则开关关闭，不从流动性供给者中分走1/6手续费。它的访问权限设置为public后编译器会默认构建一个同名public函数，正好用来实现`IUniswapV2Factory.sol`中定义的相关接口。
+    // feeTo：这个状态变量主要是用来切换开发团队手续费开关，收税地址。在UniswapV2中，用户在交易代币时，会被收取交易额的千分之三的手续费分配给所有流动性供给者。如果`feeTo`不为零地址，则代表开关打开，此时会在手续费中分1/6给开发团队。`feeTo`设置为零地址（默认值），则开关关闭，不从流动性供给者中分走1/6手续费。它的访问权限设置为public后编译器会默认构建一个同名public函数，正好用来实现`IUniswapV2Factory.sol`中定义的相关接口。
     address public feeToSetter;
-    // feeToSetter：这个状态变量是用来记录谁是`feeTo`设置者。其读取权限设置为public的主要目的同上。
+    // feeToSetter：这个状态变量是用来记录谁是`feeTo`设置者，收税权限控制地址。其读取权限设置为public的主要目的同上。
 
     mapping(address => mapping(address => address)) public getPair;
     // getPair：`mapping(address => mapping(address => address)) public getPair;`这个状态变量是一个map(其key为地址类型，其value也是一个map)，它用来记录所有的交易对地址。注意，它的名称为`getPair`并且为`public`的，这样的目的也是让默认构建的同名函数来实现相应的接口。注意这行代码中出现了三个`address`，前两个分别为交易对中两种ERC20代币合约的地址，最后一个是交易对合约本身的地址，也就是根据两个代币地址得到其交易对地址。
@@ -49,7 +50,7 @@ contract UniswapV2Factory is IUniswapV2Factory {
         // => 完成所有验证操作之后开始创建交易对合约并初始化
 
         bytes memory bytecode = type(UniswapV2Pair).creationCode;
-        // 获取交易对模板合约`UniswapV2Pair`的创建字节码`creationCode`
+        // 获取交易对模板合约`UniswapV2Pair`编译后的节码`creationCode`
         // type() 关键字用于获取某个合约的编译时类型（即编译时类型信息），其中 type(UniswapV2Pair) 返回了 UniswapV2Pair 合约的编译时类型信息，其中包括了合约的代码以及其他元数据信息。然后，通过 .creationCode 属性来获取 UniswapV2Pair 合约的创建字节码（creation bytecode），并将其赋值给了 bytecode 变量。
         // 创建字节码是一种特殊的字节码，用于在以太坊网络上部署智能合约。它包含了智能合约的代码、构造函数参数以及其他元数据信息，可以通过以太坊网络发送一笔交易来将智能合约部署到区块链上。
         // 需要注意的是，这段代码中获取的合约创建字节码是一个静态的值，在编译时就已经确定。如果合约代码发生了修改，合约创建字节码也会发生变化。
@@ -61,7 +62,7 @@ contract UniswapV2Factory is IUniswapV2Factory {
         assembly {
             // 这是一段内嵌汇编代码，Solidity中内嵌汇编语言为Yul语言。在Yul中，使用同名的内置函数来代替直接使用操作码
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
-            // 在Yul代码中使用了`create2`函数（该函数名表明使用了create2操作码）来创建新合约。
+            // 在Yul代码中使用了`create2`函数（该函数名表明使用了create2操作码）来创建新合约，并且加盐，返回地址到 pair 变量。
             // create2(v, p, n, s)：`v`代表发送到新合约的eth数量（以`wei`为单位），`p`代表代码的起始内存地址，`n`代表代码的长度，`s`代表`salt`。
         }
 

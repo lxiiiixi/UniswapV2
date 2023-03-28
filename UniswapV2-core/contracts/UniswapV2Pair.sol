@@ -19,6 +19,7 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     uint public constant MINIMUM_LIQUIDITY = 10 ** 3;
     // 定义了最小流动性。它是最小数值1的1000倍，用来在提供初始流动性时燃烧掉。
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
+    // 'transfer(address,uint256)' 的byte值 => 取哈希值 => 取前四个字节
     // 计算标准ERC20合约中转移代币函数`transfer`的函数选择器。虽然标准的ERC20合约在转移代币后返回一个成功值，但有些不标准的并没有返回值。在这个合约里统一做了处理，并使用了较低级的`call`函数代替正常的合约调用。函数选择器用于`call`函数调用中。
 
     address public factory; // 记录factory合约地址
@@ -54,7 +55,7 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
 
     function _safeTransfer(address token, address to, uint value) private {
         // _safeTransfer()：用于转移代币，使用`call`函数进行代币合约`transfer`的调用（使用了函数选择器）。注意，它检查了返回值（首先必须调用成功，然后无返回值或者返回值为true）。
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value)); // 不通过接口合约 通过底层调用
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'UniswapV2: TRANSFER_FAILED');
     }
 
@@ -83,6 +84,7 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     }
 
     // update reserves and, on the first call per block, price accumulators
+    // 用于更新交易对的资产信息，包括最新的恒定乘积中两种资产的数量和交易时的区块创建时间，以及两种价格的积累值。
     function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
         require(balance0 <= uint112(-1) && balance1 <= uint112(-1), 'UniswapV2: OVERFLOW');
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
