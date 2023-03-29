@@ -33,16 +33,19 @@ contract WETH9 {
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
 
+    // 回退函数（没有方法名）
     function() public payable {
         deposit();
     }
 
     function deposit() public payable {
+        // 存款
         balanceOf[msg.sender] += msg.value;
         Deposit(msg.sender, msg.value);
     }
 
     function withdraw(uint wad) public {
+        // 取款
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
         msg.sender.transfer(wad);

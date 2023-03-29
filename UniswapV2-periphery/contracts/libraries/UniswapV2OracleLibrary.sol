@@ -4,8 +4,9 @@ import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
 
 // library with helper methods for oracles that are concerned with computing average prices
+// 计算当前累计价格，同时避免同步调用，节省手续费。
 library UniswapV2OracleLibrary {
-    using FixedPoint for *;
+    using FixedPoint for *; // 在所有数据类型上使用FixedPoint库
 
     // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
     function currentBlockTimestamp() internal view returns (uint32) {
@@ -13,6 +14,7 @@ library UniswapV2OracleLibrary {
     }
 
     // produces the cumulative price using counterfactuals to save gas and avoid a call to sync.
+    // 计算当前区块累积价格。
     function currentCumulativePrices(
         address pair
     ) internal view returns (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) {
